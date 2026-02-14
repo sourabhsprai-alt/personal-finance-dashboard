@@ -31,8 +31,8 @@ CREATE TABLE settings (
   
   -- Income
   base_income DECIMAL(12, 2) DEFAULT 5312,
-  kindergeld DECIMAL(12, 2) DEFAULT 0,
-  upasana_govt DECIMAL(12, 2) DEFAULT 0,
+  child_benefit DECIMAL(12, 2) DEFAULT 0,
+  partner_income DECIMAL(12, 2) DEFAULT 0,
   
   -- Current phase
   current_phase INTEGER DEFAULT 1,
@@ -54,7 +54,7 @@ CREATE TABLE expenses (
   internet DECIMAL(12, 2) DEFAULT 65,
   electricity DECIMAL(12, 2) DEFAULT 76,
   groceries DECIMAL(12, 2) DEFAULT 400,
-  upasana DECIMAL(12, 2) DEFAULT 250,
+  partner_contrib DECIMAL(12, 2) DEFAULT 250,
   car_loan_min DECIMAL(12, 2) DEFAULT 430,
   personal_loan_min DECIMAL(12, 2) DEFAULT 509,
   car_insurance_monthly DECIMAL(12, 2) DEFAULT 72.33,
@@ -73,8 +73,8 @@ CREATE TABLE indian_allocations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) NOT NULL,
   
-  ppfas_sourabh DECIMAL(12, 2) DEFAULT 11000,
-  ppfas_dhea DECIMAL(12, 2) DEFAULT 1500,
+  sip_1 DECIMAL(12, 2) DEFAULT 11000,
+  sip_2 DECIMAL(12, 2) DEFAULT 1500,
   rd1 DECIMAL(12, 2) DEFAULT 10000,
   rd2 DECIMAL(12, 2) DEFAULT 5000,
   
