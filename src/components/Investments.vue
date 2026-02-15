@@ -19,19 +19,31 @@
       <div class="breakdown-grid">
         <div class="breakdown-item" v-if="liquidIndia > 0">
           <span class="breakdown-label">🇮🇳 India</span>
-          <span class="breakdown-value">{{ formatDisplay(liquidIndia, displayCurrency) }}</span>
+          <div class="breakdown-values">
+            <span class="breakdown-value">{{ formatDisplay(liquidIndia, displayCurrency) }}</span>
+            <span class="breakdown-secondary">{{ formatDisplay(liquidIndia, displayCurrency === 'EUR' ? 'INR' : 'EUR') }}</span>
+          </div>
         </div>
         <div class="breakdown-item" v-if="liquidGermany > 0">
           <span class="breakdown-label">🇩🇪 Germany</span>
-          <span class="breakdown-value">{{ formatDisplay(liquidGermany, displayCurrency) }}</span>
+          <div class="breakdown-values">
+            <span class="breakdown-value">{{ formatDisplay(liquidGermany, displayCurrency) }}</span>
+            <span class="breakdown-secondary">{{ formatDisplay(liquidGermany, displayCurrency === 'EUR' ? 'INR' : 'EUR') }}</span>
+          </div>
         </div>
         <div class="breakdown-item" v-if="liquidCrypto > 0">
           <span class="breakdown-label">🪙 Crypto</span>
-          <span class="breakdown-value">{{ formatDisplay(liquidCrypto, displayCurrency) }}</span>
+          <div class="breakdown-values">
+            <span class="breakdown-value">{{ formatDisplay(liquidCrypto, displayCurrency) }}</span>
+            <span class="breakdown-secondary">{{ formatDisplay(liquidCrypto, displayCurrency === 'EUR' ? 'INR' : 'EUR') }}</span>
+          </div>
         </div>
         <div class="breakdown-item" v-if="liquidSavings > 0">
           <span class="breakdown-label">🏦 Savings</span>
-          <span class="breakdown-value">{{ formatDisplay(liquidSavings, displayCurrency) }}</span>
+          <div class="breakdown-values">
+            <span class="breakdown-value">{{ formatDisplay(liquidSavings, displayCurrency) }}</span>
+            <span class="breakdown-secondary">{{ formatDisplay(liquidSavings, displayCurrency === 'EUR' ? 'INR' : 'EUR') }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -962,9 +974,21 @@ export default {
   color: var(--text-secondary);
 }
 
+.breakdown-values {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+}
+
 .breakdown-value {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--primary-light);
+}
+
+.breakdown-secondary {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 </style>
