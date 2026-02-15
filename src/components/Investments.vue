@@ -13,6 +13,29 @@
       </div>
     </div>
 
+    <!-- Liquid Assets Breakdown -->
+    <div class="liquid-breakdown glass-card" v-if="liquidAssets > 0">
+      <h4>💧 Liquid Breakdown</h4>
+      <div class="breakdown-grid">
+        <div class="breakdown-item" v-if="liquidIndia > 0">
+          <span class="breakdown-label">🇮🇳 India</span>
+          <span class="breakdown-value">{{ formatDisplay(liquidIndia, displayCurrency) }}</span>
+        </div>
+        <div class="breakdown-item" v-if="liquidGermany > 0">
+          <span class="breakdown-label">🇩🇪 Germany</span>
+          <span class="breakdown-value">{{ formatDisplay(liquidGermany, displayCurrency) }}</span>
+        </div>
+        <div class="breakdown-item" v-if="liquidCrypto > 0">
+          <span class="breakdown-label">🪙 Crypto</span>
+          <span class="breakdown-value">{{ formatDisplay(liquidCrypto, displayCurrency) }}</span>
+        </div>
+        <div class="breakdown-item" v-if="liquidSavings > 0">
+          <span class="breakdown-label">🏦 Savings</span>
+          <span class="breakdown-value">{{ formatDisplay(liquidSavings, displayCurrency) }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- India Investments -->
     <div class="investment-group">
       <div class="group-header" @click="toggleGroup('india')">
@@ -345,6 +368,32 @@ export default {
       return total
     })
 
+    // Liquid by category
+    const liquidIndia = computed(() => {
+      return indiaInvestments.value
+        .filter(inv => !inv.is_illiquid)
+        .reduce((sum, inv) => sum + convertToEUR(inv.amount, inv.currency), 0)
+    })
+
+    const liquidGermany = computed(() => {
+      return germanyInvestments.value
+        .filter(inv => !inv.is_illiquid)
+        .reduce((sum, inv) => sum + convertToEUR(inv.amount, inv.currency), 0)
+    })
+
+    const liquidCrypto = computed(() => {
+      return cryptoInvestments.value
+        .filter(inv => !inv.is_illiquid)
+        .reduce((sum, inv) => sum + convertToEUR(inv.amount, inv.currency), 0)
+    })
+
+    const liquidSavings = computed(() => {
+      if (!savings.value) return 0
+      return savings.value
+        .filter(sav => !sav.is_illiquid)
+        .reduce((sum, sav) => sum + convertToEUR(sav.amount, sav.currency), 0)
+    })
+
     const savingsTotal = computed(() => {
       return savingsList.value.reduce((sum, sav) => {
         return sum + convertToEUR(sav.amount, sav.currency)
@@ -536,6 +585,10 @@ export default {
       cryptoInvestments,
       totalInvestments,
       liquidAssets,
+      liquidIndia,
+      liquidGermany,
+      liquidCrypto,
+      liquidSavings,
       indiaTotal,
       germanyTotal,
       cryptoTotal,
@@ -874,5 +927,44 @@ export default {
   .esop-details {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Liquid Breakdown */
+.liquid-breakdown {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.liquid-breakdown h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-glass);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.breakdown-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.breakdown-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-light);
 }
 </style>
