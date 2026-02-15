@@ -1,9 +1,16 @@
 <template>
   <div class="investments">
-    <div class="page-banner accent-success">
-      <div class="banner-label">Total Investments</div>
-      <div class="banner-value success">{{ formatDisplay(totalInvestments, displayCurrency) }}</div>
-      <div class="banner-secondary">{{ formatDisplay(totalInvestments, displayCurrency === 'EUR' ? 'INR' : 'EUR') }}</div>
+    <div class="page-banner-row">
+      <div class="page-banner accent-success">
+        <div class="banner-label">Total Assets</div>
+        <div class="banner-value success">{{ formatDisplay(totalInvestments, displayCurrency) }}</div>
+        <div class="banner-secondary">{{ formatDisplay(totalInvestments, displayCurrency === 'EUR' ? 'INR' : 'EUR') }}</div>
+      </div>
+      <div class="page-banner accent-primary">
+        <div class="banner-label">💧 Liquid Assets</div>
+        <div class="banner-value primary">{{ formatDisplay(liquidAssets, displayCurrency) }}</div>
+        <div class="banner-secondary">{{ formatDisplay(liquidAssets, displayCurrency === 'EUR' ? 'INR' : 'EUR') }}</div>
+      </div>
     </div>
 
     <!-- India Investments -->
@@ -318,6 +325,26 @@ export default {
       }, 0)
     })
 
+    // Liquid assets = all investments + savings that are NOT illiquid
+    const liquidAssets = computed(() => {
+      let total = 0
+      if (investments.value) {
+        investments.value.forEach(inv => {
+          if (!inv.is_illiquid) {
+            total += convertToEUR(inv.amount, inv.currency)
+          }
+        })
+      }
+      if (savings.value) {
+        savings.value.forEach(sav => {
+          if (!sav.is_illiquid) {
+            total += convertToEUR(sav.amount, sav.currency)
+          }
+        })
+      }
+      return total
+    })
+
     const savingsTotal = computed(() => {
       return savingsList.value.reduce((sum, sav) => {
         return sum + convertToEUR(sav.amount, sav.currency)
@@ -508,6 +535,7 @@ export default {
       germanyInvestments,
       cryptoInvestments,
       totalInvestments,
+      liquidAssets,
       indiaTotal,
       germanyTotal,
       cryptoTotal,

@@ -148,11 +148,27 @@ export default {
       localStorage.setItem('valuesHidden', valuesHidden.value.toString())
     }
     
-    // Session timeout - track activity
-    const updateActivity = () => { lastActivity.value = Date.now() }
+    // Session timeout - track activity with localStorage persistence
+    const updateActivity = () => { 
+      const now = Date.now()
+      lastActivity.value = now
+      localStorage.setItem('lastActivity', now.toString())
+    }
+    
+    // Initialize lastActivity from localStorage or now
+    const storedActivity = localStorage.getItem('lastActivity')
+    if (storedActivity) {
+      lastActivity.value = parseInt(storedActivity)
+    } else {
+      updateActivity()
+    }
     
     const checkSessionTimeout = async () => {
-      if (isAuthenticated.value && (Date.now() - lastActivity.value) > SESSION_TIMEOUT) {
+      if (!isAuthenticated.value) return
+      
+      const timeSinceActivity = Date.now() - lastActivity.value
+      if (timeSinceActivity > SESSION_TIMEOUT) {
+        localStorage.removeItem('lastActivity')
         await signOut()
         alert('Session expired due to inactivity. Please sign in again.')
       }
@@ -200,8 +216,8 @@ export default {
         document.addEventListener(event, updateActivity, { passive: true })
       })
       
-      // Check session timeout every minute
-      setInterval(checkSessionTimeout, 60 * 1000)
+      // Check session timeout every 30 seconds
+      setInterval(checkSessionTimeout, 30 * 1000)
       
       // Also check when tab becomes visible again
       document.addEventListener('visibilitychange', () => {
@@ -209,6 +225,11 @@ export default {
           checkSessionTimeout()
         }
       })
+      
+      // Reset activity on successful auth
+      if (isAuthenticated.value) {
+        updateActivity()
+      }
     })
 
     return { authLoading, isAuthenticated, currentTab, displayCurrency, valuesHidden, tabs, currentComponent, authMode, email, password, authError, authSubmitting, dataLoading, handleAuth, handleSignOut, handleSnapshot, toggleValuesHidden }
