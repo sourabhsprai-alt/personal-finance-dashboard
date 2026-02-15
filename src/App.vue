@@ -611,10 +611,12 @@ export default {
 .page-banner-row .page-banner {
   margin-bottom: 0;
   padding: 1.5rem 1rem;
+  min-width: 0; /* Allow shrinking */
 }
 
 .page-banner-row .banner-value {
-  font-size: 1.75rem;
+  font-size: clamp(1.1rem, 4vw, 1.6rem);
+  word-break: break-word;
 }
 
 /* Mobile adjustments */
@@ -628,7 +630,7 @@ export default {
   }
   
   .page-banner-row .banner-value {
-    font-size: 1.5rem;
+    font-size: clamp(1rem, 5vw, 1.4rem);
   }
 }
 
