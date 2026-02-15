@@ -10,7 +10,6 @@
     <div v-else-if="!isAuthenticated" class="auth-screen">
       <div class="auth-card glass-card">
         <div class="auth-header">
-          <span class="logo">💰</span>
           <h1>Finance Dashboard</h1>
           <p>Track your wealth across currencies & borders</p>
         </div>
@@ -41,7 +40,6 @@
     <div v-else class="app-container">
       <header class="app-header glass-card">
         <div class="header-left">
-          <span class="logo-small">💰</span>
           <h1>Finance</h1>
         </div>
         <div class="header-right">
