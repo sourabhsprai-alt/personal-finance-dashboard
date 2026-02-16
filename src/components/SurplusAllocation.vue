@@ -26,9 +26,19 @@
           <span>€{{ maskNumber(fixedInvestmentsTotalEUR) }}</span>
         </div>
         <div class="breakdown-line net">
-          <span>= Available for Phase Goal</span>
+          <span>= Net Surplus (recurring)</span>
           <span class="surplus">€{{ maskNumber(netSurplus) }}</span>
         </div>
+        <template v-if="oneTimeTotal > 0">
+          <div class="breakdown-line deduction">
+            <span>− One-Time Expenses</span>
+            <span>€{{ maskNumber(oneTimeTotal) }}</span>
+          </div>
+          <div class="breakdown-line available">
+            <span>= Available Now</span>
+            <span class="available-value">€{{ maskNumber(availableNow) }}</span>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -104,6 +114,88 @@
         <div class="allocation-total">
           <span>Total Monthly SIPs</span>
           <span>₹{{ maskNumber(fixedInvestmentsTotal) }} <span class="eur-equiv">(≈€{{ maskNumber(fixedInvestmentsTotalEUR) }})</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- One-Time Expenses -->
+    <div class="section glass-card one-time-section">
+      <div class="section-header">
+        <h2>⚡ One-Time Expenses</h2>
+        <div class="header-actions">
+          <span class="section-badge temporary">Temporary</span>
+          <button @click="showOneTimeEdit = !showOneTimeEdit" class="btn-edit">
+            {{ showOneTimeEdit ? '✕ Cancel' : '✏️ Edit' }}
+          </button>
+        </div>
+      </div>
+      <p class="section-desc">Planned expenses to deduct from available surplus (delete after paying)</p>
+      
+      <div class="allocation-list">
+        <!-- View Mode -->
+        <template v-if="!showOneTimeEdit">
+          <div v-for="(exp, index) in oneTimeExpenses" :key="'onetime-' + index" class="allocation-row">
+            <span class="alloc-icon">{{ exp.icon }}</span>
+            <span class="alloc-name">{{ exp.name }}</span>
+            <span class="alloc-amount expense-amount">€{{ maskNumber(exp.amount) }}</span>
+          </div>
+          <div v-if="oneTimeExpenses.length === 0" class="empty-message">
+            <p>No one-time expenses. Click Edit to add upcoming expenses.</p>
+          </div>
+        </template>
+
+        <!-- Edit Mode -->
+        <template v-else>
+          <div v-for="(exp, index) in oneTimeExpenses" :key="'edit-onetime-' + index" class="allocation-row editable">
+            <select v-model="exp.icon" class="icon-select">
+              <option value="⚡">⚡</option>
+              <option value="🚗">🚗</option>
+              <option value="✈️">✈️</option>
+              <option value="🏥">🏥</option>
+              <option value="🎁">🎁</option>
+              <option value="🏠">🏠</option>
+              <option value="📱">📱</option>
+              <option value="💻">💻</option>
+              <option value="👔">👔</option>
+              <option value="📦">📦</option>
+            </select>
+            <input v-model="exp.name" class="input-name" placeholder="Expense name" />
+            <div class="sip-input-group">
+              <span class="currency-symbol">€</span>
+              <input v-model.number="exp.amount" type="number" class="sip-input" />
+            </div>
+            <button @click="removeOneTimeExpense(index)" class="btn-remove">✕</button>
+          </div>
+
+          <div class="add-row">
+            <select v-model="newOneTime.icon" class="icon-select">
+              <option value="⚡">⚡</option>
+              <option value="🚗">🚗</option>
+              <option value="✈️">✈️</option>
+              <option value="🏥">🏥</option>
+              <option value="🎁">🎁</option>
+              <option value="🏠">🏠</option>
+              <option value="📱">📱</option>
+              <option value="💻">💻</option>
+              <option value="👔">👔</option>
+              <option value="📦">📦</option>
+            </select>
+            <input v-model="newOneTime.name" placeholder="New expense" class="input-name" />
+            <div class="sip-input-group">
+              <span class="currency-symbol">€</span>
+              <input v-model.number="newOneTime.amount" type="number" placeholder="Amount" class="sip-input" />
+            </div>
+            <button @click="addOneTimeExpense" class="btn-add" :disabled="!newOneTime.name || !newOneTime.amount">+ Add</button>
+          </div>
+
+          <div class="sip-actions">
+            <button @click="saveOneTimeExpenses" class="btn-primary">💾 Save</button>
+          </div>
+        </template>
+
+        <div class="allocation-total" v-if="oneTimeExpenses.length > 0">
+          <span>Total One-Time</span>
+          <span class="expense-total">€{{ maskNumber(oneTimeTotal) }}</span>
         </div>
       </div>
     </div>
@@ -358,6 +450,9 @@ export default {
     
     // Fully dynamic fixed investments list
     const fixedInvestments = ref([])
+    const oneTimeExpenses = ref([])
+    const showOneTimeEdit = ref(false)
+    const newOneTime = ref({ name: '', amount: 0, icon: '⚡' })
 
     // Watch indianAllocations and load data (with migration from old format)
     watch(indianAllocations, (newVal) => {
@@ -385,6 +480,13 @@ export default {
         }
         
         fixedInvestments.value = investments
+        
+        // Load one-time expenses
+        if (newVal.one_time_expenses) {
+          try {
+            oneTimeExpenses.value = JSON.parse(newVal.one_time_expenses) || []
+          } catch { oneTimeExpenses.value = [] }
+        }
       }
     }, { immediate: true })
 
@@ -400,8 +502,16 @@ export default {
     })
     const fixedInvestmentsTotalEUR = computed(() => Math.round(convertToEUR(fixedInvestmentsTotal.value, 'INR')))
     
-    // Net surplus after fixed investments (what's actually available for phase goals)
+    // Net surplus after fixed investments (recurring monthly capacity)
     const netSurplus = computed(() => Math.round(surplus.value - fixedInvestmentsTotalEUR.value))
+    
+    // One-time expenses total (in EUR)
+    const oneTimeTotal = computed(() => {
+      return oneTimeExpenses.value.reduce((sum, exp) => sum + (exp.amount || 0), 0)
+    })
+    
+    // Available now (after one-time expenses)
+    const availableNow = computed(() => Math.round(netSurplus.value - oneTimeTotal.value))
 
     // Add new investment
     const addInvestment = () => {
@@ -413,6 +523,44 @@ export default {
     // Remove investment
     const removeInvestment = (index) => {
       fixedInvestments.value.splice(index, 1)
+    }
+
+    // One-time expense management
+    const addOneTimeExpense = () => {
+      if (!newOneTime.value.name || !newOneTime.value.amount) return
+      oneTimeExpenses.value.push({ ...newOneTime.value })
+      newOneTime.value = { name: '', amount: 0, icon: '⚡' }
+    }
+
+    const removeOneTimeExpense = (index) => {
+      oneTimeExpenses.value.splice(index, 1)
+    }
+
+    const saveOneTimeExpenses = async () => {
+      if (!user.value) return
+      try {
+        const { data: existing } = await supabase
+          .from('indian_allocations')
+          .select('id')
+          .eq('user_id', user.value.id)
+          .single()
+
+        if (existing) {
+          await supabase
+            .from('indian_allocations')
+            .update({ one_time_expenses: JSON.stringify(oneTimeExpenses.value) })
+            .eq('user_id', user.value.id)
+        } else {
+          await supabase
+            .from('indian_allocations')
+            .insert({ user_id: user.value.id, one_time_expenses: JSON.stringify(oneTimeExpenses.value) })
+        }
+        
+        showOneTimeEdit.value = false
+        await fetchAllData()
+      } catch (error) {
+        console.error('Error saving one-time expenses:', error)
+      }
     }
 
     // Save fixed investments to database
@@ -728,6 +876,9 @@ export default {
     return {
       totalIncome, totalExpenses, surplus, netSurplus, maskNumber, currentPhase, editingPhase,
       fixedInvestments, fixedInvestmentsTotal, fixedInvestmentsTotalEUR,
+      // One-time expenses
+      oneTimeExpenses, oneTimeTotal, availableNow,
+      showOneTimeEdit, newOneTime, addOneTimeExpense, removeOneTimeExpense, saveOneTimeExpenses,
       // Phase 1 CC Debt
       ccDebtTarget, ccDebtPaid, ccDebtProgress, ccDebtRemaining,
       editingCCPaid, tempCCPaid, startEditCCPaid, saveCCPaid, cancelEditCCPaid,
@@ -1537,5 +1688,32 @@ export default {
   .add-sip-form .sip-input-group {
     width: 100%;
   }
+}
+
+/* One-time expenses */
+.one-time-section .section-badge.temporary {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.expense-amount {
+  color: #f87171 !important;
+}
+
+.expense-total {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.breakdown-line.available {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.available-value {
+  color: var(--success) !important;
+  font-weight: 700;
 }
 </style>
